@@ -1,4 +1,4 @@
-# Pipline to train German language model and sentiment classifier
+# Pipeline to train German language model and sentiment classifier
 
 This is early commits based on the Poleval2018, it won't work well for the time being.
 
