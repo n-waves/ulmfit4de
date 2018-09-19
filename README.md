@@ -14,16 +14,24 @@ But for now here are rough manual steps:
 - Install fastai from [our fork](https://github.com/n-waves/fastai/releases/tag/poleval2018) (python PATH) 
 - Install sentencepiece from [source code](https://github.com/google/sentencepiece/) (PATH and python PATH)
 
+Requirements
+- jq  - `apt install jq`
+
 ## Training
 You should have the following structure:
 ```
 .
 ├── data
-│   └── task3 # here goes unzipped files
-│       ├── test
-│       └── train
-├── fastai_scripts -> github.com/fastai/fastai/courses/dl2/imdb_scripts/ (our version)
-├── task3
+│   ├── germeval2017
+│   │   ├── dev_v1.4.tsv
+│   │   ....
+│   │   ├── train_v1.4.tsv
+│   │   └── train_v1.4.xml
+│   ├── recorded-tweets.zip
+│   └── btw17
+│       ├── ...
+├── make_dataset
+└── README.md
 └── work  # this will be created by scripts
     ├── nouniq
     │   ├── models
@@ -40,12 +48,13 @@ To create data set:
 cd make_dataset
 WORK_DIR="../work"
 CACHE_DIR="${WORK_DIR}/shared"
-./prepare-data.sh --work-dir "${WORK_DIR}/nouniq${DICT_SIZE}k" --cache-dir "${CACHE_DIR}" --vocab-size "${DICT_SIZE}000" --model-name "sp" --most-low "False" --lower-case "False" --uniq "False"
+DICT_SIZE=30
+./prepare-data.sh --work-dir "${WORK_DIR}/btw-nouniq${DICT_SIZE}k" --cache-dir "${CACHE_DIR}" --vocab-size "${DICT_SIZE}000" --model-name "sp" --most-low "False" --lower-case "False" --uniq "False"
 ```
 
 To start training lm model
 ```bash
-dir=work/nouniq25k
+dir=work/btw-nouniq30k
 BS=192
 nl=4
 cuda=0
