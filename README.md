@@ -63,7 +63,7 @@ python fastai_scripts/pretrain_lm.py --dir-path "${dir}" --cuda-id $cuda --cl 12
 
 To see the perplexity of the model on a test set.
 ```
-python fastai_scripts/infer.py --dir-path "${dir}" --cuda-id $cuda --bs 22 --pretrain-id "nl-${nl}-small-minilr" --sentence-piece-model sp.model --test_set tmp/test_ids.npy --correct_for_up=False --nl  "${nl}"
+python fastai_scripts/infer.py --dir-path "${dir}" --cuda-id $cuda --bs 22 --pretrain-id "nl-${nl}-small-minilr" --sentence-piece-model sp.model --test_set tmp/val_ids.npy --correct_for_up=False --nl  "${nl}"
 ```
 
 To fine tune
@@ -72,4 +72,46 @@ BS=128
 python ./fastai_scripts/finetune_lm.py --dir-path "${dir}" --pretrain-path "${dir}" --cuda-id $cuda \
     --cl 6 --pretrain-id "nl-${nl}-small-minilr" --lm-id "nl-${nl}-finetune" --bs $BS --lr 0.001 \
     --use_discriminative False --dropmult 0.5 --sentence-piece-model sp.model --sampled True --nl "${nl}"
+```
+
+```bash
+BS=192
+nl=4
+cuda=0
+python ./fastai_scripts/finetune_lm.py --dir-path "work/ge2017" --pretrain-path "work/btw-nouniq30k" --cuda-id $cuda \
+    --cl 6 --pretrain-id "nl-${nl}-small-minilr" --lm-id "nl-${nl}-ge2017" --bs $BS --lr 0.001 \
+    --use_discriminative False --dropmult 0.5 --sentence-piece-model sp.model --sampled True --nl "${nl}"
+
+```
+```bash
+
+# discriminative
+python ./fastai_scripts/train_clas.py --dir-path="work/ge2017" --cuda-id=$cuda \
+    --lm-id="nl-${nl}-ge2017-all" --clas-id="class-nl-${nl}-ge2017"\
+    --bs=$BS --cl=5 --lr=0.01 --dropmult 0.5 --sentence-piece-model='sp.model' --nl 4 --use_discriminative False
+```
+
+```bash
+BS=128
+nl=4
+cuda=1
+python ./fastai_scripts/train_clas.py --dir-path="work/ge2017" --cuda-id=$cuda \
+    --lm-id="nl-${nl}-ge2017-all" --clas-id="class-nl-${nl}-ge2017"\
+    --bs=$BS --cl=5 --lr=0.01 --dropmult 0.5 --sentence-piece-model='sp.model' --nl 4 --use_discriminative True
+    
+```
+python ./fastai_scripts/train_clas.py --dir-path="work/ge2017" --cuda-id=2 \
+    --lm-id="nl-4-ge2017-all" --clas-id="class2-nl-4-ge2017"\
+    --bs=40 --cl=5 --lr=0.001 --dropmult 0.5 --sentence-piece-model='sp.model' \
+    --nl 4 --use_discriminative True
+    
+    
+    
+```bash
+destdir=work/ge2017
+BS=120
+cuda=0
+nl=4
+python ./ulmfit/evaluate.py --dir-path="$destdir" --cuda-id=$cuda \
+    --clas-id="class2-nl-${nl}-ge2017" --bs=$BS --nl "${nl}"
 ```
