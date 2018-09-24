@@ -1,0 +1,20 @@
+ python ./fastai_scripts/train_clas.py --dir-path="work/ge2017" --cuda-id=2 \
+    --lm-id="nl-4-ge2017-all" --clas-id="class2-nl-4-ge2017"\
+    --bs=40 --cl=5 --lr=0.001 --dropmult 0.5 --sentence-piece-model='sp.model' \
+    --nl 4 --use_discriminative True
+dir_path work/ge2017; cuda_id 2; lm_id nl-4-ge2017-all; clas_id class2-nl-4-ge2017; bs 40; cl 5; backwards False; dropmult 0.5 unfreeze True startat 0; bpe False; use_clr True;use_regular_schedule False; use_discriminative True; last False;chain_thaw False; from_scratch False; train_file_id
+INFO: training set len 20941 divided by 20 is 1, removing that last batch of 1 to avoid exceptions
+Epoch:   0%|                                                                                       | 0/1 [00:00<?, ?it/sepoch      trn_loss   val_loss   accuracy
+    0      0.679164   0.66231    0.720588
+Epoch: 100%|██████████████████████████████████████████████████████████████████████████████| 1/1 [02:23<00:00, 143.34s/it]
+Epoch:   0%|                                                                                       | 0/1 [00:00<?, ?it/sepoch      trn_loss   val_loss   accuracy
+    0      0.69027    0.634972   0.735681
+Epoch: 100%|██████████████████████████████████████████████████████████████████████████████| 1/1 [02:36<00:00, 156.81s/it]
+Epoch:   0%|                                                                                       | 0/5 [00:00<?, ?it/sepoch      trn_loss   val_loss   accuracy
+    0      0.619268   0.617265   0.747291
+Epoch:  20%|███████████████▌                                                              | 1/5 [04:00<16:03, 240.88s/it    1      0.620394   0.582394   0.752709
+Epoch:  40%|███████████████████████████████▏                                              | 2/5 [07:59<11:59, 239.91s/it    2      0.571214   0.567807   0.770124
+Epoch:  60%|██████████████████████████████████████████████▊                               | 3/5 [11:54<07:56, 238.27s/it    3      0.545003   0.566937   0.766254
+Epoch:  80%|██████████████████████████████████████████████████████████████▍               | 4/5 [15:55<03:58, 238.97s/it    4      0.518398   0.560857   0.774768
+Epoch: 100%|██████████████████████████████████████████████████████████████████████████████| 5/5 [19:56<00:00, 239.35s/it]
+Plotting lrs...

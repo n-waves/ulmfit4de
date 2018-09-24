@@ -1,0 +1,8 @@
+PRE='bpe_fwd_' | 'bpe_bwd_'
+IDS = 'bpe' || 'ids'
+'tmp/trn_{IDS}{train_file_id}_bwd.npy'
+'tmp/val_{IDS}_bwd.npy'
+'tmp/trn_{IDS}{train_file_id}.npy'
+'tmp/val_{IDS}.npy'
+'tmp/lbl_trn{train_file_id}.npy'
+'tmp/lbl_val.npy'

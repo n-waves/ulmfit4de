@@ -1,0 +1,32 @@
+l=4
+cuda=0
+python ./fastai_scripts/finetune_lm.py --dir-path "work/ge2017" --pretrain-path "work/btw-nouniq30k" --cuda-id $cuda \
+    --cl 6 --pretrain-id "nl-${nl}-small-minilr" --lm-id "nl-${nl}-ge2017-all" --bs $BS --lr 0.001 \
+    --use_discriminative False --dropmult 0.5 --sentence-piece-model sp.model --sampled True --nl "${nl}" --train_file_id all
+(fastai) pczapla@galatea ~/w/ulmfit4de ❯❯❯ python ./fastai_scripts/train_clas.py --dir-path="work/ge2017" --cuda-id=2 \
+    --lm-id="nl-4-ge2017-all" --clas-id="class3-nl-4-ge2017"\
+    --bs=40 --cl=12 --lr=0.001 --dropmult 0.5 --sentence-piece-model='sp.model' \
+    --nl 4 --use_discriminative True
+dir_path work/ge2017; cuda_id 2; lm_id nl-4-ge2017-all; clas_id class3-nl-4-ge2017; bs 40; cl 12; backwards False; dropmult 0.5 unfreeze True startat 0; bpe False; use_clr True;use_regular_schedule False; use_discriminative True; last False;chain_thaw False; from_scratch False; train_file_id
+INFO: training set len 20941 divided by 20 is 1, removing that last batch of 1 to avoid exceptions
+Epoch:   0%|                                                                              | 0/1 [00:00<?, ?it/sepoch      trn_loss   val_loss   accuracy
+    0      0.706689   0.654777   0.728328
+Epoch: 100%|█████████████████████████████████████████████████████████████████████| 1/1 [02:26<00:00, 146.29s/it]
+Epoch:   0%|                                                                              | 0/1 [00:00<?, ?it/sepoch      trn_loss   val_loss   accuracy
+    0      0.655126   0.640256   0.736068
+Epoch: 100%|█████████████████████████████████████████████████████████████████████| 1/1 [02:34<00:00, 154.60s/it]
+Epoch:   0%|                                                                             | 0/12 [00:00<?, ?it/sepoch      trn_loss   val_loss   accuracy
+    0      0.660691   0.600824   0.751161
+Epoch:   8%|█████▋                                                              | 1/12 [04:01<44:18, 241.64s/it    1      0.599994   0.569795   0.763545
+Epoch:  17%|███████████▎                                                        | 2/12 [07:58<40:01, 240.15s/it    2      0.557705   0.559009   0.775929
+Epoch:  25%|█████████████████                                                   | 3/12 [11:54<35:51, 239.03s/it    3      0.529055   0.536978   0.7887
+Epoch:  33%|██████████████████████▋                                             | 4/12 [15:51<31:46, 238.29s/it    4      0.456995   0.536071   0.795279
+Epoch:  42%|████████████████████████████▎                                       | 5/12 [19:48<27:46, 238.09s/it    5      0.43084    0.538832   0.792183
+Epoch:  50%|██████████████████████████████████                                  | 6/12 [23:48<23:51, 238.55s/it    6      0.393469   0.55359    0.789861
+Epoch:  58%|███████████████████████████████████████▋                            | 7/12 [27:48<19:55, 239.04s/it    7      0.350108   0.567024   0.790248
+Epoch:  67%|█████████████████████████████████████████████▎                      | 8/12 [31:47<15:56, 239.01s/it    8      0.344523   0.563478   0.793344
+Epoch:  75%|███████████████████████████████████████████████████                 | 9/12 [35:46<11:57, 239.08s/it    9      0.31005    0.593032   0.794892
+Epoch:  83%|███████████████████████████████████████████████████████▊           | 10/12 [39:44<07:57, 238.73s/it    10     0.300432   0.627582   0.793731
+Epoch:  92%|█████████████████████████████████████████████████████████████▍     | 11/12 [43:45<03:59, 239.18s/it    11     0.26506    0.632482   0.80031
+Epoch: 100%|███████████████████████████████████████████████████████████████████| 12/12 [47:45<00:00, 239.46s/it]
+Plotting lrs...
