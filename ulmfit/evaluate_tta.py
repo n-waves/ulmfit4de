@@ -11,8 +11,9 @@ from sklearn.metrics import f1_score, precision_score, recall_score
 # In[3]:
 OTHER=0
 OFFENSE=1
-def error_analysis(preds, true_y, tst_dl, spp):
+def error_analysis(preds, true_y, tst_dl, spp, backwards):
     tweets = np.array([[int(i) for i in tweet] for *x, y in iter(tst_dl) for tweet in x[0].cpu().numpy().transpose()])
+    d = -1 if backwards else 1
     true_y = true_y[:, 0]
 
     offenses = true_y == OFFENSE
@@ -22,37 +23,68 @@ def error_analysis(preds, true_y, tst_dl, spp):
         true_claz = true_y == claz
         pos = probs[true_claz].argsort()[::-1]
         for i in pos[:5]:
-            print(f"{probs[true_claz][i]:0.2f}: {spp.DecodeIds(tweets[true_claz][i])}")
+            print(f"{probs[true_claz][i]:0.2f}: {spp.DecodeIds(tweets[true_claz][i][::d])}")
         print("...")
         m = len(pos) // 2
         for i in pos[m-2:m+3]:
-            print(f"{probs[true_claz][i]:0.2f}: {spp.DecodeIds(tweets[true_claz][i])}")
+            print(f"{probs[true_claz][i]:0.2f}: {spp.DecodeIds(tweets[true_claz][i][::d])}")
         print("...")
         for i in pos[-5:]:
-            print(f"{probs[true_claz][i]:0.2f}: {spp.DecodeIds(tweets[true_claz][i])}")
+            print(f"{probs[true_claz][i]:0.2f}: {spp.DecodeIds(tweets[true_claz][i][::d])}")
 
-def evaluate_model(test_file, m, p, spp, bs=120, squeeze_bin=False):
-    tst = np.load(p / f"{test_file}_ids.npy")
-    lbl = np.load(p / f"lbl_{test_file}.npy")
+class SPDataset(Dataset):
+  def __init__(self, spp, sentences, labels):
+    self.spp = spp
+    self.sentences = sentences
+    self.labels = labels
+
+  def __len__(self):
+    return len(self.sentences)
+
+class SampleEncodeDataset(SPDataset):
+  def __init__(self, spp, sentences, labels, alpha=0.1, n=64):
+    super().__init__(spp, sentences, labels)
+    self.alpha = alpha
+    self.n = n
+  def __getitem__(self, index):
+    return np.array(self.spp.SampleEncodeAsIds(self.sentences[index], self.n, self.alpha)), self.labels[index]
+
+class BestEncodeDataset(SPDataset):
+  def __getitem__(self, index):
+    return np.array(self.spp.EncodeAsIds(self.sentences[index])), self.labels[index]
+
+def evaluate_model(test_file, m, p, spp, sp_alpha=0.1, sp_n=64, n_tta=7, best=True, bs=120, squeeze_bin=False, backwards=False):
+    with open(p / f'test.txt', 'r') as f:
+        rows = [line.split('\t') for line in f.readlines()]
+    tst = [row[0] for row in rows]
+    lbl = np.array([[int(row[1] != 'OTHER')] for row in rows])
 
     m.reset()
     m.eval()
 
-    tst_ds = TextDataset(tst, lbl)
+    if best:
+        tst_ds = BestEncodeDataset(spp, tst, lbl)
+        n_tta = 1
+    else:
+        tst_ds = SampleEncodeDataset(spp, tst, lbl, sp_alpha, sp_n)
     tst_samp = SortSampler(tst, key=lambda x: len(tst[x]))
     tst_dl = DataLoader(tst_ds, bs, transpose=True, num_workers=1, pad_idx=1, sampler=tst_samp)
 
-    res = predict_with_targs(m, tst_dl)
-    order = np.array(list(tst_samp))
+    pr = np.zeros(len(tst))
+    for i in range(n_tta):
+        res = predict_with_targs(m, tst_dl)
+        pr += torch.from_numpy(res[0]).softmax(1).numpy()[:, 1]
     true_y = res[1]
-    preds = np.argmax(res[0], axis=1)
+    order = np.array(list(tst_samp))
+    #preds = np.argmax(res[0], axis=1)
+    preds = (pr / n_tta > 0.5).astype(int)
 
     if squeeze_bin:
         print ("Converting mutli classification in to binary classificaiton")
         preds = preds > 0
         true_y = true_y > 0
 
-    error_analysis(res[0], true_y, tst_dl, spp)
+    error_analysis(res[0], true_y, tst_dl, spp, backwards)
     cm = confusion_matrix(true_y, preds)
     f1_micro_avg = f1_score(true_y, preds, average='micro')
     f1_macro_avg = f1_score(true_y, preds, average='macro')
@@ -89,7 +121,7 @@ def evaluate_model(test_file, m, p, spp, bs=120, squeeze_bin=False):
         "recall_macro": ra,
     }
 
-def evaluate(dir_path, clas_id, test_file='test1', cuda_id=0, nl=4, classes=3, bs=120, squeeze_bin=False, backwards=False):
+def evaluate(dir_path, clas_id, test_file='test1', cuda_id=0, nl=4, classes=3, bs=120, sp_alpha=0.1, sp_n=64, tta=7, best=True, squeeze_bin=False, backwards=False):
     if not hasattr(torch._C, '_cuda_setDevice'):
         print('CUDA not available. Setting device=-1.')
         cuda_id = -1
@@ -99,8 +131,7 @@ def evaluate(dir_path, clas_id, test_file='test1', cuda_id=0, nl=4, classes=3, b
     spp = sp.SentencePieceProcessor()
     spp.Load(str(p /"tmp" / 'sp.model'))
     vs = spp.GetPieceSize()  # len(itos)
-    spp.SetEncodeExtraOptions("bos:eos")
-
+    spp.SetEncodeExtraOptions("bos:eos:reverse" if backwards else "bos:eos")
 
     # In[14]:
     dps = np.array([0.4,0.5,0.05,0.3,0.4])
@@ -109,12 +140,13 @@ def evaluate(dir_path, clas_id, test_file='test1', cuda_id=0, nl=4, classes=3, b
     m = get_rnn_classifier(bptt, 20*70, c, vs, emb_sz=em_sz, n_hid=nh, n_layers=nl, pad_token=1,
               layers=[em_sz*3, 50, c], drops=[dps[4], 0.1],
               dropouti=dps[0], wdrop=dps[1], dropoute=dps[2], dropouth=dps[3])
-    model_path = p/"models"/f"fwd_{clas_id}_clas_1.h5"
+    PRE = 'bwd_' if backwards else 'fwd_'
+    model_path = p/"models"/f"{PRE}{clas_id}_clas_1.h5"
     load_model(m, model_path)
     print("Loading", model_path)
     m = to_gpu(m)
     direction="bwd" if backwards else "fwd"
-    preds, metrics = evaluate_model(test_file, m, p/"tmp", spp, bs, squeeze_bin)
+    preds, metrics = evaluate_model(test_file, m, p/"tmp", spp, sp_alpha, sp_n, best, tta, bs, squeeze_bin, backwards)
     (p / "models" / test_file ).mkdir(exist_ok=True)
     np.save(p/"models"/ test_file/ f"{direction}_{clas_id}_clas_1-results.npy", preds)
 
