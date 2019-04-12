@@ -58,38 +58,41 @@ def evaluate_model(test_file, m, p, spp, bs=120, squeeze_bin=False, backwards=Fa
         preds = preds > 0
         true_y = true_y > 0
 
-    error_analysis(res[0], true_y, tst_dl, spp, backwards)
-    cm = confusion_matrix(true_y, preds)
-    f1_micro_avg = f1_score(true_y, preds, average='micro')
-    f1_macro_avg = f1_score(true_y, preds, average='macro')
-    pa = precision_score(true_y, preds, average='macro')
-    ra = recall_score(true_y, preds, average='macro')
-    print("Test file:", test_file)
-    print("Sum of all 1s lbls", np.sum(true_y))
-    print("Sum of all 1s preds", np.sum(preds))
-    print("F1 score micro avg:", f1_micro_avg)
-    print("F1 score macro avg:", f1_macro_avg)
-    print("Precision macro avg:", pa)
-    print("Recall macro avg:", ra)
-    print("Special F1 macro* avg:", 2/(1/pa + 1/ra))
+    if labels:
+        error_analysis(res[0], true_y, tst_dl, spp, backwards)
+        cm = confusion_matrix(true_y, preds)
+        f1_micro_avg = f1_score(true_y, preds, average='micro')
+        f1_macro_avg = f1_score(true_y, preds, average='macro')
+        pa = precision_score(true_y, preds, average='macro')
+        ra = recall_score(true_y, preds, average='macro')
+        print("Test file:", test_file)
+        print("Sum of all 1s lbls", np.sum(true_y))
+        print("Sum of all 1s preds", np.sum(preds))
+        print("F1 score micro avg:", f1_micro_avg)
+        print("F1 score macro avg:", f1_macro_avg)
+        print("Precision macro avg:", pa)
+        print("Recall macro avg:", ra)
+        print("Special F1 macro* avg:", 2/(1/pa + 1/ra))
+    
+        if np.max(true_y) == 1:
+            f1_bin = f1_score(true_y, preds, average='binary')
+            prec = precision_score(true_y, preds)
+            recall = recall_score(true_y, preds)
+            print("Binary")
+            print("F1 score bin:", f1_bin)
+            print("Precision:", prec)
+            print("Recall:", recall)
+        print("Confusion matrix\n", cm)
+        return (res[0])[np.argsort(order)], {
+            "f1_micro_avg_":f1_micro_avg,
+            "f1_macro_avg_":f1_macro_avg,
+            "pred_macro": pa,
+            "recall_macro": ra,
+        }
+    else:
+        return (res[0])[np.argsort(order)], {}
 
-    if np.max(true_y) == 1:
-        f1_bin = f1_score(true_y, preds, average='binary')
-        prec = precision_score(true_y, preds)
-        recall = recall_score(true_y, preds)
-        print("Binary")
-        print("F1 score bin:", f1_bin)
-        print("Precision:", prec)
-        print("Recall:", recall)
-    print("Confusion matrix\n", cm)
-    return (res[0])[np.argsort(order)], {
-        "f1_micro_avg_":f1_micro_avg,
-        "f1_macro_avg_":f1_macro_avg,
-        "pred_macro": pa,
-        "recall_macro": ra,
-    }
-
-def evaluate(dir_path, clas_id, test_file='test1', cuda_id=0, nl=4, classes=3, bs=120, squeeze_bin=False, backwards=False, dump_preds=None):
+def evaluate(dir_path, clas_id, test_file='test1', cuda_id=0, nl=4, classes=3, bs=120, squeeze_bin=False, backwards=False, dump_preds=None, labels=False):
     if not hasattr(torch._C, '_cuda_setDevice'):
         print('CUDA not available. Setting device=-1.')
         cuda_id = -1
@@ -114,7 +117,7 @@ def evaluate(dir_path, clas_id, test_file='test1', cuda_id=0, nl=4, classes=3, b
     print("Loading", model_path)
     m = to_gpu(m)
     direction="bwd" if backwards else "fwd"
-    preds, metrics = evaluate_model(test_file, m, p/"tmp", spp, bs, squeeze_bin, backwards)
+    preds, metrics = evaluate_model(test_file, m, p/"tmp", spp, bs, squeeze_bin, backwards, labels)
     if dump_preds is not None:
         with open(dump_preds, 'w') as f:
             f.write('\n'.join([str(int(x>=0)) for x in preds[:, 1]]))
