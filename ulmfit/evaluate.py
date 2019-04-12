@@ -10,8 +10,31 @@ from sklearn.metrics import f1_score, precision_score, recall_score
 
 # In[3]:
 
+OTHER=0
+OFFENSE=1
+def error_analysis(preds, true_y, tst_dl, spp, backwards):
+    tweets = np.array([[int(i) for i in tweet] for *x, y in iter(tst_dl) for tweet in x[0].cpu().numpy().transpose()])
+    d = -1 if backwards else 1
+    true_y = true_y[:, 0]
 
-def evaluate_model(test_file, m, p, bs=120, squeeze_bin=False):
+    offenses = true_y == OFFENSE
+    for s, claz in [('offenses', OFFENSE), ('neutrals', OTHER)]:
+        print(f'True {s}:')
+        probs = torch.from_numpy(preds).softmax(1).numpy()[:, claz]
+        true_claz = true_y == claz
+        pos = probs[true_claz].argsort()[::-1]
+        for i in pos[:5]:
+            print(f"{probs[true_claz][i]:0.2f}: {spp.DecodeIds(tweets[true_claz][i][::d])}")
+        print("...")
+        m = len(pos) // 2
+        for i in pos[m-2:m+3]:
+            print(f"{probs[true_claz][i]:0.2f}: {spp.DecodeIds(tweets[true_claz][i][::d])}")
+        print("...")
+        for i in pos[-5:]:
+            print(f"{probs[true_claz][i]:0.2f}: {spp.DecodeIds(tweets[true_claz][i][::d])}")
+
+
+def evaluate_model(test_file, m, p, spp, bs=120, squeeze_bin=False, backwards=False):
     tst = np.load(p / f"{test_file}_ids.npy")
     lbl = np.load(p / f"lbl_{test_file}.npy")
 
@@ -32,6 +55,7 @@ def evaluate_model(test_file, m, p, bs=120, squeeze_bin=False):
         preds = preds > 0
         true_y = true_y > 0
 
+    error_analysis(res[0], true_y, tst_dl, spp, backwards)
     cm = confusion_matrix(true_y, preds)
     f1_micro_avg = f1_score(true_y, preds, average='micro')
     f1_macro_avg = f1_score(true_y, preds, average='macro')
@@ -62,7 +86,7 @@ def evaluate_model(test_file, m, p, bs=120, squeeze_bin=False):
         "recall_macro": ra,
     }
 
-def evaluate(dir_path, clas_id, test_file='test1', cuda_id=0, nl=4, classes=3, bs=120, squeeze_bin=False, backwards=False):
+def evaluate(dir_path, clas_id, test_file='test1', cuda_id=0, nl=4, classes=3, bs=120, squeeze_bin=False, backwards=False, dump_preds=None):
     if not hasattr(torch._C, '_cuda_setDevice'):
         print('CUDA not available. Setting device=-1.')
         cuda_id = -1
@@ -87,7 +111,10 @@ def evaluate(dir_path, clas_id, test_file='test1', cuda_id=0, nl=4, classes=3, b
     print("Loading", model_path)
     m = to_gpu(m)
     direction="bwd" if backwards else "fwd"
-    preds, metrics = evaluate_model(test_file, m, p/"tmp", bs, squeeze_bin)
+    preds, metrics = evaluate_model(test_file, m, p/"tmp", spp, bs, squeeze_bin, backwards)
+    if dump_preds is not None:
+        with open(dump_preds, 'w') as f:
+            f.write('\n'.join([str(int(x>=0)) for x in preds[:, 1]]))
     (p / "models" / test_file ).mkdir(exist_ok=True)
     np.save(p/"models"/ test_file/ f"{direction}_{clas_id}_clas_1-results.npy", preds)
 
