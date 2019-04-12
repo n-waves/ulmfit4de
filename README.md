@@ -1,3 +1,7 @@
+# This branch contains changes done for poleval 2019 hate speech detection task.
+
+This branch requires older version of fast.ai with our modifications: https://github.com/n-waves/fastai/tree/poleval19/hatespeech .
+
 # Pipline to train German language model and sentiment classifier
 
 This is early commits based on the Poleval2018, it won't work well for the time being.
