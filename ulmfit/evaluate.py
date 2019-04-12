@@ -34,9 +34,12 @@ def error_analysis(preds, true_y, tst_dl, spp, backwards):
             print(f"{probs[true_claz][i]:0.2f}: {spp.DecodeIds(tweets[true_claz][i][::d])}")
 
 
-def evaluate_model(test_file, m, p, spp, bs=120, squeeze_bin=False, backwards=False):
+def evaluate_model(test_file, m, p, spp, bs=120, squeeze_bin=False, backwards=False, labels=False):
     tst = np.load(p / f"{test_file}_ids.npy")
-    lbl = np.load(p / f"lbl_{test_file}.npy")
+    if labels:
+        lbl = np.load(p / f"lbl_{test_file}.npy")
+    else:
+        lbl = np.zeros(len(tst), dtype=np.int)
 
     m.reset()
     m.eval()

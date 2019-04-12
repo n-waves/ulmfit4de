@@ -6,9 +6,8 @@ set -e -x
 [ ! -d "ulmfit4pl" ] && git clone -b poleval19/hatespeech --single-branch "https://github.com/n-waves/ulmfit4de" "ulmfit4pl"
 [ ! -d "fastai" ] && git clone -b poleval19/hatespeech --single-branch "https://github.com/n-waves/fastai"
 
-conda create -y -n ulmfit4pl -c pytorch python=3.7 pytorch=0.4.1 cudatoolkit="${CUDA_VERSION}" scikit-learn
+conda create -y -n ulmfit4pl -c pytorch python=3.6 pytorch=0.4.1 cudatoolkit="${CUDA_VERSION}" scikit-learn spacy numpy
 source activate ulmfit4pl
 
 cd fastai && pip install -e '.' && cd ..
-pip install sentencepiece fire sacremoses Unidecode
-
+pip install sentencepiece fire sacremoses Unidecode lxml
