@@ -1,5 +1,26 @@
 # This branch contains changes done for poleval 2019 hate speech detection task.
 
+The easiest way to install all dependencies is to download setup-ulmfit.sh and run:
+
+```
+CUDA_VERSION=9.0 ./setup-ulmfit4pl.sh
+```
+
+This script requires conda. It will clone this repo and our fast.ai repo, create conda environment and install required packages. Download [our poleval19 model](https://n-waves.com/poleval2019-task6-model) and unzip it in `ulmfit4pl` repository. Assuming that you have a test.txt file with tweets, f.e.,
+
+```
+@anonymized_account @anonymized_account @anonymized_account Najbardziej to on jest wolny od mózgu.
+@anonymized_account A może Curie-Skłodowska też?!
+```
+
+run:
+
+```
+source activate ulmfit4pl
+./test.sh test.txt
+```
+
+
 This branch requires older version of fast.ai with our modifications: https://github.com/n-waves/fastai/tree/poleval19/hatespeech .
 
 # Pipline to train German language model and sentiment classifier
