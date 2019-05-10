@@ -43,9 +43,9 @@ def replace_emoticons(s):
     return emoticons_re.sub(lambda x: emoticons[x.group(1)], s)
 #mt = MosesTokenizer('pl')
 
-def preprocess_comment(comment, subs, keep_ogonki, lowercase, keep_numbers, escape_emoji, remove_asciiart, keep_order=False):
+def preprocess_comment(comment, subs, keep_ogonki, lowercase, keep_numbers, escape_emoji, remove_asciiart):
     comment = html.unescape(comment.strip())
-    if comment in deleted and not keep_order:
+    if comment in deleted:
         return ''
     if lowercase:
         comment = comment.lower()
@@ -54,7 +54,7 @@ def preprocess_comment(comment, subs, keep_ogonki, lowercase, keep_numbers, esca
     comment = replace_emoticons(comment)
     if not keep_numbers:
         comment = number_re.sub(f' {num_tag} ', comment)
-    if remove_asciiart and not keep_order and len(remove_alphanum.sub('', comment)) > 0.5 * len(comment):
+    if remove_asciiart and len(remove_alphanum.sub('', comment)) > 0.5 * len(comment):
         return ''
     if escape_emoji:
         comment = replace_emojis(comment)
@@ -80,7 +80,7 @@ def preprocess(filename, twitter=False, format='json', show_ignored_only=False, 
 
     #all_comments = all_comments[::1000]
     subs = subs_reddit if not twitter else subs_twitter
-    comments = [preprocess_comment(comment, subs, keep_ogonki, lowercase, keep_numbers, escape_emoji, remove_asciiart, keep_order) for comment in tqdm(all_comments)]
+    comments = [preprocess_comment(comment, subs, keep_ogonki, lowercase, keep_numbers, escape_emoji, remove_asciiart) for comment in tqdm(all_comments)]
     empty = 0
 
     df = pd.DataFrame(comments)
@@ -109,7 +109,7 @@ def preprocess(filename, twitter=False, format='json', show_ignored_only=False, 
 ##            if show_ignored_only:
 ##                print(orig)
 
-    if empty > 0:
+    if empty > 0 and not keep_order:
         print(f"{empty} comments ignored", file=sys.stderr)
 
 fire.Fire(preprocess)

@@ -37,9 +37,9 @@ def create_script(DATA_DIR):
     RAW_DIR=DATA_DIR / 'rawtexts'
     for e in lm_experiments:
         print(f'mkdir -p "{DATA_DIR / e.to_dirname()}"')
-        lm = f'python preprocessing/reddit-preprocess.py --filename "{ RAW_DIR / e.dataset }.csv" --format csv --keep-numbers False --remove-asciiart False --output-format csv ' + e.to_options() + f' > "{ DATA_DIR / e.to_dirname()/ "cleaned.csv" }" &'
+        lm = f'python preprocessing/reddit-preprocess.py --filename "{ RAW_DIR / e.dataset }.csv" --format csv --keep-numbers False --remove-asciiart False --output-format csv --keep-order ' + e.to_options() + f' > "{ DATA_DIR / e.to_dirname()/ "cleaned.csv" }" &'
         trn = f'python preprocessing/reddit-preprocess.py --filename "{ RAW_DIR / "train_text.txt" }" --format lines --keep-numbers False --remove-asciiart False --output-format csv --twitter --keep-order ' + e.to_options() + f' > "{ DATA_DIR / e.to_dirname() / "cls_train.csv" }" &'
-        tst = f'python preprocessing/reddit-preprocess.py --filename "{ RAW_DIR / "test_text.txt" }" --format lines --keep-numbers False --remove-asciiart False --output-format csv --twitter --keep-order' + e.to_options() + f' > "{ DATA_DIR / e.to_dirname() / "cls_test.csv" }" &'
+        tst = f'python preprocessing/reddit-preprocess.py --filename "{ RAW_DIR / "test_text.txt" }" --format lines --keep-numbers False --remove-asciiart False --output-format csv --twitter --keep-order ' + e.to_options() + f' > "{ DATA_DIR / e.to_dirname() / "cls_test.csv" }" &'
         print(lm)
         print(trn)
         print(tst)
