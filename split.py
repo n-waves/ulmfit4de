@@ -1,6 +1,7 @@
 import pandas as pd, numpy as np
 import fire
 from pathlib import Path
+from sys import stderr
 
 def find_tokens(strs, n):
     tokens = 0
@@ -11,6 +12,7 @@ def find_tokens(strs, n):
         pos += 1
         if tokens >= n:
             return pos
+    print(f"Unable to find {n} tokens, only {tokens} found", file=stderr)
     return pos
 
 def to_csv(strs, path):
@@ -24,11 +26,14 @@ def split(data_dir):
     x = pd.read_csv(data_dir / "cleaned.csv", header=None).fillna('')
     y = x[0].values
     z = np.random.choice(y, len(y), replace=False)
-    start = find_tokens(z, int(1e7))
-    end = find_tokens(z[start:], int(1e5))+start
+    val_end = find_tokens(z, int(1e5))
+    offset = int(1e4)  # start with the same sentence
+    if val_end > offset:
+        print(f"Increase offset to at least {val_end}", file=stderr)
+    trn_end = find_tokens(z[offset:], int(1e7))+offset
     
-    to_csv(z[:start], out_dir / "pl.wiki.train.tokens")
-    to_csv(z[start:end], out_dir / "pl.wiki.valid.tokens")
-    to_csv(z[start:end], out_dir / "pl.wiki.test.tokens")
+    to_csv(z[offset:trn_end], out_dir / "pl.wiki.train.tokens")
+    to_csv(z[:val_end], out_dir / "pl.wiki.valid.tokens")
+    to_csv(z[:val_end], out_dir / "pl.wiki.test.tokens")
 
 if __name__ == "__main__": fire.Fire(split)
