@@ -43,9 +43,9 @@ def replace_emoticons(s):
     return emoticons_re.sub(lambda x: emoticons[x.group(1)], s)
 #mt = MosesTokenizer('pl')
 
-def preprocess_comment(comment, subs, keep_ogonki, lowercase, keep_numbers, escape_emoji, remove_asciiart):
+def preprocess_comment(comment, subs, keep_ogonki, lowercase, keep_numbers, escape_emoji, remove_asciiart, keep_order=False):
     comment = html.unescape(comment.strip())
-    if comment in deleted:
+    if comment in deleted and not keep_order:
         return ''
     if lowercase:
         comment = comment.lower()
@@ -54,7 +54,7 @@ def preprocess_comment(comment, subs, keep_ogonki, lowercase, keep_numbers, esca
     comment = replace_emoticons(comment)
     if not keep_numbers:
         comment = number_re.sub(f' {num_tag} ', comment)
-    if remove_asciiart and len(remove_alphanum.sub('', comment)) > 0.5 * len(comment):
+    if remove_asciiart and not keep_order and len(remove_alphanum.sub('', comment)) > 0.5 * len(comment):
         return ''
     if escape_emoji:
         comment = replace_emojis(comment)
@@ -63,7 +63,7 @@ def preprocess_comment(comment, subs, keep_ogonki, lowercase, keep_numbers, esca
     comment = comment.strip()
     return comment
 
-def preprocess(filename, twitter=False, format='json', show_ignored_only=False, keep_ogonki=True, lowercase=False, keep_numbers=True, escape_emoji=True, remove_asciiart=True, output_format='tsv'):
+def preprocess(filename, twitter=False, format='json', show_ignored_only=False, keep_ogonki=True, lowercase=False, keep_numbers=True, escape_emoji=True, remove_asciiart=True, keep_order=False, output_format='tsv'):
     with open(filename, 'r') as f:
         if format == 'lines':
             all_comments = f.readlines()
@@ -80,14 +80,18 @@ def preprocess(filename, twitter=False, format='json', show_ignored_only=False, 
 
     #all_comments = all_comments[::1000]
     subs = subs_reddit if not twitter else subs_twitter
-    comments = [preprocess_comment(comment, subs, keep_ogonki, lowercase, keep_numbers, escape_emoji, remove_asciiart) for comment in tqdm(all_comments)]
+    comments = [preprocess_comment(comment, subs, keep_ogonki, lowercase, keep_numbers, escape_emoji, remove_asciiart, keep_order) for comment in tqdm(all_comments)]
     empty = 0
 
     df = pd.DataFrame(comments)
     df2 = pd.DataFrame(all_comments)
     if not show_ignored_only:
         sep = '\t' if output_format == 'tsv' else ','
-        df[df[0] != ''].to_csv(sys.stdout, header=None, index=None, sep=sep)
+        if keep_order:
+            out = df
+        else:
+            out = df[df[0] != '']
+        out.to_csv(sys.stdout, header=None, index=None, sep=sep)
     else:
         print(df2[df[0] == ''])
         #for orig in df2[df[0] == '']:
